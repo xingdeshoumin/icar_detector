@@ -1,0 +1,57 @@
+{
+    "OUPUT_DATASET": false,
+
+    "Conical_LowerLimit_LH": 27,
+    "Conical_LowerLimit_LS": 113,
+    "Conical_LowerLimit_LV": 115,
+    "Conical_LowerLimit_UH": 37,
+    "Conical_LowerLimit_US": 255,
+    "Conical_LowerLimit_UV": 200,
+
+    "Conical_SIZE": 10,
+
+    "Conical_max_ratio": 1.0,
+    "Conical_min_ratio": 0.5,
+
+    "Boom_LowerLimit_LH1": 0,
+    "Boom_LowerLimit_LS1": 120,
+    "Boom_LowerLimit_LV1": 0,
+    "Boom_LowerLimit_UH1": 22,
+    "Boom_LowerLimit_US1": 255,
+    "Boom_LowerLimit_UV1": 121,
+
+    "Boom_LowerLimit_LH2": 160,
+    "Boom_LowerLimit_LS2": 120,
+    "Boom_LowerLimit_LV2": 0,
+    "Boom_LowerLimit_UH2": 183,
+    "Boom_LowerLimit_US2": 255,
+    "Boom_LowerLimit_UV2": 121,
+
+    "Boom_kernel": 7,
+    "Boom_SIZE": 20,
+
+    "Boom_max_ratio": 2.5,
+    "Boom_min_ratio": 1.2,
+
+    "Sign_LowerLimit_LH1": 0,
+    "Sign_LowerLimit_LS1": 120,
+    "Sign_LowerLimit_LV1": 0,
+    "Sign_LowerLimit_UH1": 22,
+    "Sign_LowerLimit_US1": 255,
+    "Sign_LowerLimit_UV1": 121,
+
+    "Sign_LowerLimit_LH2": 160,
+    "Sign_LowerLimit_LS2": 120,
+    "Sign_LowerLimit_LV2": 0,
+    "Sign_LowerLimit_UH2": 183,
+    "Sign_LowerLimit_US2": 255,
+    "Sign_LowerLimit_UV2": 121,
+
+    "Sign_kernel": 7,
+    "Sign_SIZE": 20,
+
+    "Sign_max_ratio": 1.2,
+    "Sign_min_ratio": 0.6,
+
+    "roi_size": 28
+}
