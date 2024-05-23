@@ -16,6 +16,7 @@ find_package(nlohmann_json REQUIRED)
 # find_package(gtest REQUIRED)
 
 add_executable(detector
+    # test/set_parameter.cpp
     test/test_sign_cls.cpp
     src/sign_classifier.cpp
     src/detector.cpp

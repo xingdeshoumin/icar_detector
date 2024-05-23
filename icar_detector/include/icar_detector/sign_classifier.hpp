@@ -17,11 +17,12 @@ class SignClassifier
 public:
   SignClassifier(
     const std::string & model_path, const std::string & label_path, const double threshold,
-    const std::vector<std::string> & ignore_classes = {});
+    const std::vector<std::string> & ignore_classes, const bool log_out);
 
   void classify(std::vector<Sign> & signs);
 
   double threshold;
+  bool log_out;
 
 private:
   cv::dnn::Net net_;

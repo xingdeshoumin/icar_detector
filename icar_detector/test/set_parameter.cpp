@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <opencv2/opencv.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include "opencv_use/Marks.hpp"
+#include "icar_detector/Marks.hpp"
 
 cv::RotatedRect conicalRect(std::vector<cv::Point> contour)
 {
@@ -68,36 +68,36 @@ cv::Mat select_parameter(const cv::Mat & rgb_img)
         cv::Scalar lowerLimit(l_h, l_s, l_v);
         cv::Scalar upperLimit(u_h, u_s, u_v);
 
-        cv::Mat Boom_mask;
-        cv::inRange(hsv, lowerLimit, upperLimit, Boom_mask);
+        cv::Mat Obstacle_mask;
+        cv::inRange(hsv, lowerLimit, upperLimit, Obstacle_mask);
         // mask膨胀
         cv::Mat mask_kernel = cv::Mat::ones(kernel, kernel, CV_8U);
-        cv::dilate(Boom_mask, Boom_mask, mask_kernel);
+        cv::dilate(Obstacle_mask, Obstacle_mask, mask_kernel);
 
         // 寻找mask轮廓
         using std::vector;
         vector<vector<cv::Point>> contours;
         vector<cv::Vec4i> hierarchy;
-        cv::findContours(Boom_mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+        cv::findContours(Obstacle_mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-        vector<Boom> booms;
+        vector<Obstacle> booms;
 
         for (const auto & contour : contours) {
-            if (contour.size() < size) continue;
+            if (contour.size() < static_cast<long unsigned int>(size)) continue;
 
             auto r_rect = conicalRect(contour);
-            auto boom = Boom(r_rect);
+            auto boom = Obstacle(r_rect);
             booms.emplace_back(boom);
         }
 
         cv::imshow("frame", rgb_img);
-        cv::Mat Boom_result;
-        cv::cvtColor(Boom_mask, Boom_result, cv::COLOR_GRAY2BGR);
-        cv::drawContours(Boom_result, contours, -1, cv::Scalar(0, 0, 255), 2);
+        cv::Mat Obstacle_result;
+        cv::cvtColor(Obstacle_mask, Obstacle_result, cv::COLOR_GRAY2BGR);
+        cv::drawContours(Obstacle_result, contours, -1, cv::Scalar(0, 0, 255), 2);
         for (const auto & boom : booms) {
-            showRect(Boom_result, boom, cv::Scalar(255,0,0));
+            showRect(Obstacle_result, boom, cv::Scalar(255,0,0));
         }
-        cv::imshow("Boom_result", Boom_result);
+        cv::imshow("Obstacle_result", Obstacle_result);
         cv::waitKey(1);
     }
 }
@@ -107,7 +107,7 @@ int main(int argc, char ** argv)
   (void) argc;
   (void) argv;
 
-  cv::Mat scr = cv::imread("/mnt/d/Chromedownload/mee/mee/192.jpg");
+  cv::Mat scr = cv::imread("/mnt/d/Chromedownload/smart-car/smart-car/edgeboard/res/samples/train/660.jpg");
   cv::Mat resized_img;
   cv::Size size(640, 480);
   cv::resize(scr, resized_img, size);

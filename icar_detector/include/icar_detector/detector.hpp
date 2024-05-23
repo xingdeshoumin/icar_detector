@@ -55,13 +55,14 @@ public:
 
     cv::Mat preprocessImage(const cv::Mat & input);
     std::vector<Conical> findConicals(const cv::Mat & hsv_img);
-    std::vector<Boom> findBooms(const cv::Mat & hsv_img);
     std::vector<Sign> findSigns(const cv::Mat & hsv_img);
-    std::vector<PredictResult> packer(std::vector<Conical> conicals, std::vector<Boom> booms, std::vector<Sign> signs);
+    std::vector<Obstacle> findObstacles(const cv::Mat & hsv_img);
+
+    std::vector<PredictResult> packer(std::vector<Conical> conicals, std::vector<Sign> signs);
 
     // For debug usage
-    cv::Mat getAllNumbersImage();
-    void drawResults(cv::Mat & img); // todo
+    void drawResults(cv::Mat & img);
+    void showRect(cv::Mat img, cv::RotatedRect rotatedRect, cv::Scalar color);
 
     Params params;
 
@@ -72,20 +73,24 @@ public:
     std::vector<cv::Vec4i> hierarchy;
     // Marks
     std::vector<Conical> conicals;
-    std::vector<Boom> booms;
+    std::vector<Obstacle> obstacles;
     std::vector<Sign> signs;
+    std::vector<Cross> cross;
     // Mats
     cv::Mat resized_img;
     cv::Mat hsv_img;
     cv::Mat Conical_mask;
     cv::Mat Boom_mask;
     cv::Mat Sign_mask;
+    cv::Mat Obstacle_mask;
 
 private:
     cv::RotatedRect conicalRect(std::vector<cv::Point> contour);
     bool isConical(const Conical & conical, const Params & params);
-    bool isBoom(const Boom & boom, const Params & params);
+    bool isObstacle(const Obstacle & obstacle, const Params & params);
     bool isSign(const Sign & sign, const Params & params);
+    double w_judge(cv::Mat & Obstacle_mask);
+    std::vector<Cross> Cross_times_count(cv::Mat & Obstacle_mask);
 };
 
 #endif // !DETECTOR_HPP_

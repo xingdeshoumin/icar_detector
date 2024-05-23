@@ -23,8 +23,8 @@
 
 SignClassifier::SignClassifier(
     const std::string & model_path, const std::string & label_path, const double thre,
-    const std::vector<std::string> & ignore_classes)
-:   threshold(thre), ignore_classes_(ignore_classes)
+    const std::vector<std::string> & ignore_classes, const bool out)
+:   threshold(thre), ignore_classes_(ignore_classes), log_out(out)
 {
     net_ = cv::dnn::readNetFromONNX(model_path);
 
@@ -33,12 +33,13 @@ SignClassifier::SignClassifier(
     while (std::getline(label_file, line)) {
         class_names_.push_back(line);
     }
-
-    std::cout << "class_names_: ";
-    for (auto & class_name : class_names_){
-        std::cout << class_name << ", ";
+    if (log_out){
+        std::cout << "class_names_: ";
+        for (auto & class_name : class_names_){
+            std::cout << class_name << ", ";
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
 }
 
 void SignClassifier::classify(std::vector<Sign> & signs)
@@ -72,12 +73,12 @@ void SignClassifier::classify(std::vector<Sign> & signs)
         sign.label_id = label_id;
         sign.confidence = confidence;
         sign.number = class_names_[label_id];
-        std::cout << "sign.number: " << sign.number << std::endl;
+        if (log_out) std::cout << "sign.number: " << sign.number << std::endl;
         std::stringstream result_ss;
         result_ss << sign.number << ": " << std::fixed << std::setprecision(1)
                 << sign.confidence * 100.0 << "%";
         sign.classfication_result = result_ss.str();
-        std::cout << "confidence: " << sign.confidence << std::endl;
+        if (log_out) std::cout << "confidence: " << sign.confidence << std::endl;
     }
     
     signs.erase(
