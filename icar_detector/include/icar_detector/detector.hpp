@@ -61,12 +61,14 @@ public:
     std::vector<PredictResult> packer(std::vector<Conical> conicals, std::vector<Sign> signs);
 
     // For debug usage
+    void output_dataset(cv::Mat & roi);
     void drawResults(cv::Mat & img);
     void showRect(cv::Mat img, cv::RotatedRect rotatedRect, cv::Scalar color);
 
     Params params;
 
-    std::unique_ptr<SignClassifier> classifier;
+    std::unique_ptr<SignClassifier> sign_classifier;
+    std::unique_ptr<SignClassifier> obstacle_classifier;
 
     // Debug msgs
     std::vector<std::vector<cv::Point>> contours;

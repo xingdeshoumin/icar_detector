@@ -1,5 +1,6 @@
 {
-    "OUPUT_DATASET": false,
+    "OUPUT_DATASET_Signs": false,
+    "OUPUT_DATASET_Obstacles": false,
     "SHOW_LOGS": false,
 
     "Conical_LowerLimit_LH": 27,
@@ -42,10 +43,10 @@
     "Obstacle_LowerLimit_US": 164,
     "Obstacle_LowerLimit_UV": 44,
 
-    "Obstacle_kernel": 2,
-    "Obstacle_SIZE": 100,
+    "Obstacle_kernel": 40,
+    "Obstacle_SIZE": 40,
 
-    "Obstacle_max_ratio": 1.5,
+    "Obstacle_max_ratio": 2.5,
     "Obstacle_min_ratio": 0.6,
 
     "Obstacle_w_judge":0.5,

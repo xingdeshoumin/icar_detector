@@ -14,7 +14,8 @@
 
 struct Params
 {
-    bool OUPUT_DATASET = true;          // 是否输出数据集
+    bool OUPUT_DATASET_Signs = true;    // 是否输出数据集
+    bool OUPUT_DATASET_Obstacles;
     bool SHOW_LOGS = true;              // 是否输出log
     int Conical_LowerLimit_LH = 27;     // 锥桶HSV参数
     int Conical_LowerLimit_LS = 113;
@@ -58,7 +59,8 @@ struct Params
 
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(
     Params,
-    OUPUT_DATASET,
+    OUPUT_DATASET_Signs,
+    OUPUT_DATASET_Obstacles,
     SHOW_LOGS,
     Conical_LowerLimit_LH,
     Conical_LowerLimit_LS,
@@ -131,6 +133,15 @@ struct Config : public Params
     Params params;
 };
 
+struct for_MLP
+{
+    cv::Mat sign_img;
+    int label_id;
+    float confidence;
+    std::string number;
+    std::string classfication_result;
+};
+
 struct Obstacle : public cv::RotatedRect
 {
     Obstacle() = default;
@@ -154,6 +165,8 @@ struct Obstacle : public cv::RotatedRect
     double length;
     double width;
     float tilt_angle;
+    // for MLP!!!!!!!!!!!
+    for_MLP mlp;
 };
 
 struct Conical : public cv::RotatedRect
@@ -204,6 +217,8 @@ struct  Cross : public cv::RotatedRect
     double length;
     double width;
     float tilt_angle;
+    // for MLP!!!!!!!!!!!
+    for_MLP mlp;
 };
 
 struct Sign : public cv::RotatedRect
@@ -230,11 +245,7 @@ struct Sign : public cv::RotatedRect
     double width;
     float tilt_angle;
     // for MLP!!!!!!!!!!!
-    cv::Mat sign_img;
-    int label_id;
-    float confidence;
-    std::string number;
-    std::string classfication_result;
+    for_MLP mlp;
 };
 
 #endif // !MARKS_HPP_

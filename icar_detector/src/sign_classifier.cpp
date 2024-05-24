@@ -42,10 +42,10 @@ SignClassifier::SignClassifier(
     }
 }
 
-void SignClassifier::classify(std::vector<Sign> & signs)
+void SignClassifier::sign_classify(std::vector<Sign>& signs)
 {
     for (auto & sign : signs){
-        cv::Mat image = sign.sign_img.clone();
+        cv::Mat image = sign.mlp.sign_img.clone();
 
         // Normalize
         image = image / 255.0;
@@ -70,27 +70,84 @@ void SignClassifier::classify(std::vector<Sign> & signs)
         cv::Point class_id_point;
         minMaxLoc(softmax_prob.reshape(1, 1), nullptr, &confidence, nullptr, &class_id_point);
         int label_id = class_id_point.x;
-        sign.label_id = label_id;
-        sign.confidence = confidence;
-        sign.number = class_names_[label_id];
-        if (log_out) std::cout << "sign.number: " << sign.number << std::endl;
+        sign.mlp.label_id = label_id;
+        sign.mlp.confidence = confidence;
+        sign.mlp.number = class_names_[label_id];
+        if (log_out) std::cout << "sign.mlp.number: " << sign.mlp.number << std::endl;
         std::stringstream result_ss;
-        result_ss << sign.number << ": " << std::fixed << std::setprecision(1)
-                << sign.confidence * 100.0 << "%";
-        sign.classfication_result = result_ss.str();
-        if (log_out) std::cout << "confidence: " << sign.confidence << std::endl;
+        result_ss << sign.mlp.number << ": " << std::fixed << std::setprecision(1)
+                << sign.mlp.confidence * 100.0 << "%";
+        sign.mlp.classfication_result = result_ss.str();
+        if (log_out) std::cout << "confidence: " << sign.mlp.confidence << std::endl;
     }
     
     signs.erase(
     std::remove_if(
       signs.begin(), signs.end(),
       [this](const Sign & sign) {
-        if (sign.confidence < threshold) {
+        if (sign.mlp.confidence < threshold) {
           return true;
         }
 
         for (const auto & ignore_class : ignore_classes_) {
-          if (sign.number == ignore_class) {
+          if (sign.mlp.number == ignore_class) {
+            return true;
+          }
+        }
+        return false;
+      }),
+    signs.end());
+}
+
+void SignClassifier::obstacles_classify(std::vector<Obstacle>& signs)
+{
+    for (auto & sign : signs){
+        cv::Mat image = sign.mlp.sign_img.clone();
+
+        // Normalize
+        image = image / 255.0;
+
+        // Create blob from image
+        cv::Mat blob;
+        cv::dnn::blobFromImage(image, blob);
+
+        // Set the input blob for the neural network
+        net_.setInput(blob);
+        // Forward pass the image blob through the model
+        cv::Mat outputs = net_.forward();
+
+        // Do softmax
+        float max_prob = *std::max_element(outputs.begin<float>(), outputs.end<float>());
+        cv::Mat softmax_prob;
+        cv::exp(outputs - max_prob, softmax_prob);
+        float sum = static_cast<float>(cv::sum(softmax_prob)[0]);
+        softmax_prob /= sum;
+
+        double confidence;
+        cv::Point class_id_point;
+        minMaxLoc(softmax_prob.reshape(1, 1), nullptr, &confidence, nullptr, &class_id_point);
+        int label_id = class_id_point.x;
+        sign.mlp.label_id = label_id;
+        sign.mlp.confidence = confidence;
+        sign.mlp.number = class_names_[label_id];
+        if (log_out) std::cout << "obstacles.mlp.number: " << sign.mlp.number << std::endl;
+        std::stringstream result_ss;
+        result_ss << sign.mlp.number << ": " << std::fixed << std::setprecision(1)
+                << sign.mlp.confidence * 100.0 << "%";
+        sign.mlp.classfication_result = result_ss.str();
+        if (log_out) std::cout << "confidence: " << sign.mlp.confidence << std::endl;
+    }
+    
+    signs.erase(
+    std::remove_if(
+      signs.begin(), signs.end(),
+      [this](const Obstacle & sign) {
+        if (sign.mlp.confidence < threshold) {
+          return true;
+        }
+
+        for (const auto & ignore_class : ignore_classes_) {
+          if (sign.mlp.number == ignore_class) {
             return true;
           }
         }

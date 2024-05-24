@@ -107,7 +107,7 @@ int main(int argc, char ** argv)
   (void) argc;
   (void) argv;
 
-  cv::Mat scr = cv::imread("/mnt/d/Chromedownload/smart-car/smart-car/edgeboard/res/samples/train/660.jpg");
+  cv::Mat scr = cv::imread("/mnt/d/Chromedownload/smart-car/smart-car/edgeboard/res/samples/train/162.jpg");
   cv::Mat resized_img;
   cv::Size size(640, 480);
   cv::resize(scr, resized_img, size);

@@ -1,29 +1,50 @@
 #  导入包和定义参数
 import sys
+import pynvml
 import torch
 import torch.utils.data as tud
-import matplotlib.pyplot as plt
+import torch.nn.functional as F
 import torch.nn as nn
 from tqdm import tqdm
 import argparse
-from network import MLP
 from torchvision import datasets, transforms
 
 
 def parse_option():
     parser = argparse.ArgumentParser('MLP')
-    parser.add_argument('--epochs', type=int, help='the number of epoch', default=20)
-    parser.add_argument('--batch_size', type=int, default=20, help='input batch size for training (default: 15)')
+    parser.add_argument('--epochs', type=int, help='the number of epoch', default=40)
+    parser.add_argument('--batch_size', type=int, default=40, help='input batch size for training (default: 15)')
     parser.add_argument('--lr', type=int, default=0.1)
     parser.add_argument('--step_size', type=int, default=5)
     parser.add_argument('--gamma', type=int, default=1.0)
+    parser.add_argument("--dataset_path", type=str,
+                        default='./Obstacle_dataset/')
     parser.add_argument("--save_path", type=str, help="the path of model saved",
-                        default='../../models/')
+                        default='./Obstacle_models/')
     args = parser.parse_args()  # 也可直接使用 args, _ = parser.parse_known_args()
     return args
 
+#  定义网络和模型 三层的网络
+class MLP(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = torch.nn.Linear(28 * 28, 164)
+        self.fc2 = torch.nn.Linear(164, 84)
+        self.fc3 = torch.nn.Linear(84, 3)
+
+    def forward(self, x):
+        x = torch.nn.functional.relu(self.fc1(x))
+        x = torch.nn.functional.relu(self.fc2(x))
+        x = torch.nn.functional.relu(self.fc3(x))
+        # x = torch.nn.functional.log_softmax(self.fc3(x), dim=1)
+        return x
+
 def main(args):
     best_acc = 0.0
+    # 初始化NVML库
+    pynvml.nvmlInit()
+    # 获取第一个GPU设备的句柄
+    handle = pynvml.nvmlDeviceGetHandleByIndex(0)
     while (1):
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print("using {} device.".format(device))
@@ -36,9 +57,9 @@ def main(args):
         ])
 
         # 使用ImageFolder加载数据集
-        torch_dataset = datasets.ImageFolder('D:/Miniconda3/envs/ML_01/Data/MLP/deep_learning_for_cv/1_classification/c02_MLP/dataset/', transform=transform)
+        torch_dataset = datasets.ImageFolder(args.dataset_path, transform=transform)
 
-        train_size, val_size = int(len(torch_dataset)*0.8), len(torch_dataset) - int(len(torch_dataset)*0.8)
+        train_size, val_size = int(len(torch_dataset)*0.6), len(torch_dataset) - int(len(torch_dataset)*0.6)
         train_dataset, val_dataset = tud.random_split(torch_dataset, [train_size, val_size])
         train_loader = tud.DataLoader(dataset=train_dataset,
                                       batch_size=args.batch_size,
@@ -99,12 +120,15 @@ def main(args):
                     acc += torch.eq(predict_y, val_labels.to(device)).sum().item()
 
             val_accurate = acc / val_size
-            print(f'[epoch {epoch+1}] , val_accuracy: {val_accurate:.3f}')
+            print(f'[epoch {epoch+1}] , best_acc: {best_acc:.3f}, now_acc: {val_accurate:.3f}')
+            # 获取GPU内存信息
+            info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+            print(f'GPU内存占用 : {(info.used/info.total):.3f}')
             if val_accurate > best_acc:
                 best_acc = val_accurate
-                filename = f"{args.save_path}model_{best_acc}percent.pth"
+                filename = f"{args.save_path}model_{best_acc:.3f}percent.pth"
                 torch.save(net.state_dict(), filename)
-                filename = f"{args.save_path}model_{best_acc}percent.onnx"
+                filename = f"{args.save_path}model_{best_acc:.3f}percent.onnx"
                 dummy_input = torch.randn(args.batch_size, 1, 784, device=device)
                 torch.onnx.export(net, dummy_input, filename)
         print('Finished Training')

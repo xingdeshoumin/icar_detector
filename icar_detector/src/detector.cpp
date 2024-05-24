@@ -19,7 +19,10 @@ std::vector<PredictResult> Detector::detect(const cv::Mat & input)
     obstacles = findObstacles(hsv_img);
 
     if (!signs.empty()){
-        classifier->classify(signs);
+        sign_classifier->sign_classify(signs);
+    }
+    if (!obstacles.empty()){
+        obstacle_classifier->obstacles_classify(obstacles);
     }
 
     // 这堆东西到通信包的转换
@@ -38,16 +41,16 @@ std::vector<PredictResult> Detector::packer(std::vector<Conical> conicals, std::
     // signs
     for (const auto & sign : signs) {
         sign.points(p);
-        if (sign.label_id == 0)
-            predict_results.push_back({0, "LABEL_BOMB", sign.confidence, (int)p[0].x, (int)p[0].y, (int)sign.width, (int)sign.length});
-        if (sign.label_id == 1)
-            predict_results.push_back({8, "LABEL_PATIENT", sign.confidence, (int)p[0].x, (int)p[0].y, (int)sign.width, (int)sign.length});
-        if (sign.label_id == 3)
-            predict_results.push_back({6, "LABEL_EVIL", sign.confidence, (int)p[0].x, (int)p[0].y, (int)sign.width, (int)sign.length});
-        if (sign.label_id == 4)
-            predict_results.push_back({12, "LABEL_TUMBLE", sign.confidence, (int)p[0].x, (int)p[0].y, (int)sign.width, (int)sign.length});
-        if (sign.label_id == 5)
-            predict_results.push_back({11, "LABEL_THIEF", sign.confidence, (int)p[0].x, (int)p[0].y, (int)sign.width, (int)sign.length});
+        if (sign.mlp.label_id == 0)
+            predict_results.push_back({0, "LABEL_BOMB", sign.mlp.confidence, (int)p[0].x, (int)p[0].y, (int)sign.width, (int)sign.length});
+        if (sign.mlp.label_id == 1)
+            predict_results.push_back({8, "LABEL_PATIENT", sign.mlp.confidence, (int)p[0].x, (int)p[0].y, (int)sign.width, (int)sign.length});
+        if (sign.mlp.label_id == 3)
+            predict_results.push_back({6, "LABEL_EVIL", sign.mlp.confidence, (int)p[0].x, (int)p[0].y, (int)sign.width, (int)sign.length});
+        if (sign.mlp.label_id == 4)
+            predict_results.push_back({12, "LABEL_TUMBLE", sign.mlp.confidence, (int)p[0].x, (int)p[0].y, (int)sign.width, (int)sign.length});
+        if (sign.mlp.label_id == 5)
+            predict_results.push_back({11, "LABEL_THIEF", sign.mlp.confidence, (int)p[0].x, (int)p[0].y, (int)sign.width, (int)sign.length});
     }
 
     return predict_results;
@@ -127,18 +130,10 @@ std::vector<Sign> Detector::findSigns(const cv::Mat & hsv_img)
 
             cv::resize(roi, roi, cv::Size(28, 28));
 
-            if (params.OUPUT_DATASET){
-                // 使用系统时间来命名你的图片
-                auto now = std::chrono::system_clock::now();
-                auto now_ns = std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
-                auto value = now_ns.time_since_epoch();
-                long duration = value.count();
-                std::string filename = "./icar_detector/image/" + std::to_string(duration) + ".jpg";
-
-                std::cout << filename << " saved" << std::endl;
-                cv::imwrite(filename, roi);
+            if (params.OUPUT_DATASET_Signs){
+                output_dataset(roi);
             }
-            sign.sign_img = roi.clone();
+            sign.mlp.sign_img = roi.clone();
             signs.emplace_back(sign);
         }
     }
@@ -169,16 +164,34 @@ std::vector<Obstacle> Detector::findObstacles(const cv::Mat & hsv_img)
         
         if (isObstacle(obstacle, params)){
             cv::Mat roi = Obstacle_mask(r_rect.boundingRect());
-            // 白色占比判断
-            if (w_judge(roi) > params.Obstacle_w_judge)
-                obstacles.emplace_back(obstacle);
+            cv::resize(roi, roi, cv::Size(28, 28));
+            // // 白色占比判断
+            // if (w_judge(roi) > params.Obstacle_w_judge)
+            if (params.OUPUT_DATASET_Obstacles){
+                output_dataset(roi);
+            }
+            obstacle.mlp.sign_img = roi.clone();
+            obstacles.emplace_back(obstacle);
         }
     }
     
     // 判断斑马线
-    cross = Cross_times_count(Obstacle_mask);
+    // cross = Cross_times_count(Obstacle_mask);
 
     return obstacles;
+}
+
+void Detector::output_dataset(cv::Mat & roi)
+{
+    // 使用系统时间来命名你的图片
+    auto now = std::chrono::system_clock::now();
+    auto now_ns = std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
+    auto value = now_ns.time_since_epoch();
+    long duration = value.count();
+    std::string filename = "./icar_detector/image/" + std::to_string(duration) + ".jpg";
+
+    std::cout << filename << " saved" << std::endl;
+    cv::imwrite(filename, roi);
 }
 
 cv::RotatedRect Detector::conicalRect(std::vector<cv::Point> contour)
@@ -289,6 +302,10 @@ void Detector::drawResults(cv::Mat & img)
         showRect(img, conical, cv::Scalar(0,255,255));
     }
     for (const auto & obstacle : obstacles) {
+        cv::putText(
+        img, obstacle.mlp.classfication_result, obstacle.bottom, cv::FONT_HERSHEY_SIMPLEX, 0.5,
+        cv::Scalar(255,255,0), 2);
+
         showRect(img, obstacle, cv::Scalar(255,255,0));
     }
     for (const auto & cros : cross) {
@@ -296,7 +313,7 @@ void Detector::drawResults(cv::Mat & img)
     }
     for (auto & sign : signs){
         cv::putText(
-        img, sign.classfication_result, sign.bottom, cv::FONT_HERSHEY_SIMPLEX, 0.5,
+        img, sign.mlp.classfication_result, sign.bottom, cv::FONT_HERSHEY_SIMPLEX, 0.5,
         cv::Scalar(0,255,0), 2);
 
         showRect(img, sign, cv::Scalar(0,255,0));

@@ -12,6 +12,11 @@
 
 #include "icar_detector/detector.hpp"
 
+bool numeric_string_compare(std::string a, std::string b)
+{
+    return std::stoi(a.substr(a.find_last_of("/") + 1)) < std::stoi(b.substr(b.find_last_of("/") + 1));
+}
+
 int main()
 {
     // 加载config
@@ -22,11 +27,14 @@ int main()
     // cv::Mat scr = cv::imread("/mnt/d/Chromedownload/mee/mee/1.jpg");
     // /mnt/d/Chromedownload/smart-car/smart-car/edgeboard/res/samples/train
     // 指定文件夹路径
-    cv::String folderPath = "/mnt/d/Chromedownload/smart-car/smart-car/edgeboard/res/samples/train/*.jpg"; 
+    std::string folderPath = "/mnt/d/Chromedownload/smart-car/smart-car/edgeboard/res/samples/train/*.jpg"; 
 
     // 获取文件夹中所有图片的路径
-    std::vector<cv::String> imagePaths;
+    std::vector<std::string> imagePaths;
     cv::glob(folderPath, imagePaths, false);
+
+    // 对imagePaths按照数字顺序排序
+    std::sort(imagePaths.begin(), imagePaths.end(), numeric_string_compare);
 
     // 创建窗口
     cv::namedWindow("Image Viewer", cv::WINDOW_NORMAL);
@@ -35,14 +43,18 @@ int main()
     auto pkg_path = ament_index_cpp::get_package_share_directory("icar_detector");
     pkg_path = pkg_path.substr(0, pkg_path.find("icar_detector")) + "icar_detector" + "/icar_detector";
     if (config.params.SHOW_LOGS) std::cout << "pkg_path: " << pkg_path << std::endl;
-    auto model_path = pkg_path + "/model/mlp.onnx";
-    auto label_path = pkg_path + "/model/label.txt";
+    auto sign_model_path = pkg_path + "/model/sign_mlp.onnx";
+    auto sign_label_path = pkg_path + "/model/sign_label.txt";
+    auto obstacle_model_path = pkg_path + "/model/obstacle_mlp.onnx";
+    auto obstacle_label_path = pkg_path + "/model/obstacle_label.txt";
     float threshold = 0.4f;
     std::vector<std::string> ignore_classes = {"negative"};
     
     Detector detector(config.params);
-    detector.classifier =
-    std::make_unique<SignClassifier>(model_path, label_path, threshold, ignore_classes, config.params.SHOW_LOGS);
+    detector.sign_classifier =
+    std::make_unique<SignClassifier>(sign_model_path, sign_label_path, threshold, ignore_classes, config.params.SHOW_LOGS);
+    detector.obstacle_classifier =
+    std::make_unique<SignClassifier>(obstacle_model_path, obstacle_label_path, threshold, ignore_classes, config.params.SHOW_LOGS);
 
     // 读取第一张图片
     int currentImageIndex = 0;
@@ -88,8 +100,10 @@ int main()
     // cv::imshow("Sign_result", Sign_result);
 
     // 等待用户按键
-    char key = cv::waitKey(1);
+    char key = cv::waitKey(10);
     // std::cout << currentImageIndex << std::endl;
+    detector.params.OUPUT_DATASET_Signs = false;
+    detector.params.OUPUT_DATASET_Obstacles = false;
     if (key == 'a' || key == 'A') {
         // 反向浏览
         currentImageIndex = (currentImageIndex - 1 + imagePaths.size()) % imagePaths.size();
@@ -98,18 +112,16 @@ int main()
         currentImageIndex = (currentImageIndex + 1) % imagePaths.size();
     } else if (key == 'f' || key == 'F') {
         // 输出数据集
-        out = true;
+        detector.params.OUPUT_DATASET_Signs = true;
+    } else if (key == 'g' || key == 'G') {
+        // 输出数据集
+        detector.params.OUPUT_DATASET_Obstacles = true;
     } else if (key == 27) {
         // 按下 ESC 键退出
         break;
     }
-    if (out == true){
-        detector.params.OUPUT_DATASET = true;
-        out = false;
-    }
-    else{
-        detector.params.OUPUT_DATASET = false;
-    }
+
+
     }
     return 0;
 }
