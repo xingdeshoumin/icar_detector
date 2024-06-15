@@ -43,8 +43,7 @@ cv::Mat select_parameter(const cv::Mat & rgb_img)
     int u_v=255;
     int kernel=0;
     int size=0;
-    int outsideRate=100;
-    int insideRate=0;
+    int corrosion=0;
     cv::namedWindow("Tracking", cv::WINDOW_NORMAL);
     cv::resizeWindow("Tracking", 800, 600);
 
@@ -56,8 +55,7 @@ cv::Mat select_parameter(const cv::Mat & rgb_img)
     cv::createTrackbar("UV", "Tracking", &u_v, 255, nullptr);
     cv::createTrackbar("SIZE", "Tracking", &size, 255, nullptr);
     cv::createTrackbar("kernel", "Tracking", &kernel, 100, nullptr);
-    cv::createTrackbar("outside", "Tracking", &outsideRate, 200, nullptr);
-    cv::createTrackbar("inside", "Tracking", &insideRate, 100, nullptr);
+    cv::createTrackbar("corrosion", "Tracking", &corrosion, 100, nullptr);
 
     while(1)
     {
@@ -73,6 +71,14 @@ cv::Mat select_parameter(const cv::Mat & rgb_img)
         // mask膨胀
         cv::Mat mask_kernel = cv::Mat::ones(kernel, kernel, CV_8U);
         cv::dilate(Obstacle_mask, Obstacle_mask, mask_kernel);
+
+        // 创建一个结构元素
+        if (corrosion > 0){
+            cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(corrosion, corrosion));
+
+            // 使用开运算（先腐蚀后膨胀）来细化mask
+            cv::morphologyEx(Obstacle_mask, Obstacle_mask, cv::MORPH_OPEN, element);
+        }
 
         // 寻找mask轮廓
         using std::vector;
@@ -107,7 +113,7 @@ int main(int argc, char ** argv)
   (void) argc;
   (void) argv;
 
-  cv::Mat scr = cv::imread("/mnt/d/Chromedownload/smart-car/smart-car/edgeboard/res/samples/train/162.jpg");
+  cv::Mat scr = cv::imread("/mnt/d/Miniconda3/envs/ML_01/Data/output4/1485.jpg");
   cv::Mat resized_img;
   cv::Size size(640, 480);
   cv::resize(scr, resized_img, size);

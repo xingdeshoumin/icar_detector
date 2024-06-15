@@ -51,18 +51,19 @@ class Detector
 public:
     Detector(const Params & input_params);
 
-    std::vector<PredictResult> detect(const cv::Mat & input);
+    void initDetect_thread(void);
+    std::vector<PredictResult> detect(const cv::Mat & input); //阻塞方式的调用 
 
-    cv::Mat preprocessImage(const cv::Mat & input);
+    cv::Mat inputImage(const cv::Mat & input);
     std::vector<Conical> findConicals(const cv::Mat & hsv_img);
     std::vector<Sign> findSigns(const cv::Mat & hsv_img);
     std::vector<Obstacle> findObstacles(const cv::Mat & hsv_img);
+    Tool_man thinObstacles(std::vector<Obstacle> obstacles);
 
-    std::vector<PredictResult> packer(std::vector<Conical> conicals, std::vector<Sign> signs);
-
+    std::vector<PredictResult> packer(std::vector<Conical> & conicals, std::vector<Sign> & signs, std::vector<Cross> & cross, std::vector<Barrier> & barriers);
     // For debug usage
     void output_dataset(cv::Mat & roi);
-    void drawResults(cv::Mat & img);
+    cv::Mat drawResults(cv::Mat & img);
     void showRect(cv::Mat img, cv::RotatedRect rotatedRect, cv::Scalar color);
 
     Params params;
@@ -70,29 +71,33 @@ public:
     std::unique_ptr<SignClassifier> sign_classifier;
     std::unique_ptr<SignClassifier> obstacle_classifier;
 
-    // Debug msgs
-    std::vector<std::vector<cv::Point>> contours;
-    std::vector<cv::Vec4i> hierarchy;
     // Marks
     std::vector<Conical> conicals;
-    std::vector<Obstacle> obstacles;
     std::vector<Sign> signs;
+    std::vector<Obstacle> obstacles;
     std::vector<Cross> cross;
+    std::vector<Barrier> barriers;
+
+    std::vector<PredictResult> result;
     // Mats
     cv::Mat resized_img;
     cv::Mat hsv_img;
     cv::Mat Conical_mask;
-    cv::Mat Boom_mask;
     cv::Mat Sign_mask;
     cv::Mat Obstacle_mask;
 
 private:
+    void start_findConicals(void);
+    void start_findSigns(void);
+    void start_findObstacles(void);
+    void start_packer(void);
     cv::RotatedRect conicalRect(std::vector<cv::Point> contour);
     bool isConical(const Conical & conical, const Params & params);
     bool isObstacle(const Obstacle & obstacle, const Params & params);
     bool isSign(const Sign & sign, const Params & params);
-    double w_judge(cv::Mat & Obstacle_mask);
-    std::vector<Cross> Cross_times_count(cv::Mat & Obstacle_mask);
+    bool isBarrier(const Barrier & barrier, const Params & params);
+    bool isCross(const Cross & cros, const Params & params);
+    float w_judge(cv::RotatedRect & r_rect, cv::Mat & result);
 };
 
 #endif // !DETECTOR_HPP_

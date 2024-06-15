@@ -1,41 +1,44 @@
 {
     "OUPUT_DATASET_Signs": false,
     "OUPUT_DATASET_Obstacles": false,
-    "SHOW_LOGS": false,
+    "SHOW_LOGS": true,
+    "THREADS": true,
+    "thread_sleep": 8,
 
     "Conical_LowerLimit_LH": 27,
     "Conical_LowerLimit_LS": 113,
     "Conical_LowerLimit_LV": 115,
     "Conical_LowerLimit_UH": 37,
     "Conical_LowerLimit_US": 255,
-    "Conical_LowerLimit_UV": 200,
+    "Conical_LowerLimit_UV": 255,
+    "Conical_filter": 6,
 
-    "Conical_kernel": 7,
     "Conical_SIZE": 10,
-
-    "Conical_max_ratio": 1.0,
+    "Conical_max_ratio": 2.0,
     "Conical_min_ratio": 0.5,
+    "Conical_w_judge": 0.2,
 
     "Sign_LowerLimit_LH1": 0,
     "Sign_LowerLimit_LS1": 120,
     "Sign_LowerLimit_LV1": 0,
-    "Sign_LowerLimit_UH1": 22,
+    "Sign_LowerLimit_UH1": 10,
     "Sign_LowerLimit_US1": 255,
-    "Sign_LowerLimit_UV1": 121,
+    "Sign_LowerLimit_UV1": 255,
 
     "Sign_LowerLimit_LH2": 160,
     "Sign_LowerLimit_LS2": 120,
     "Sign_LowerLimit_LV2": 0,
     "Sign_LowerLimit_UH2": 183,
     "Sign_LowerLimit_US2": 255,
-    "Sign_LowerLimit_UV2": 121,
+    "Sign_LowerLimit_UV2": 255,
 
     "Sign_kernel": 7,
-    "Sign_SIZE": 20,
-
-    "Sign_max_ratio": 2.5,
-    "Sign_min_ratio": 0.6,
-
+    "Sign_SIZE": 30,
+    "Sign_max_ratio": 2.0,
+    "Sign_min_ratio": 0.8,
+    "Sign_w_judge": 0.2,
+    
+    "Obstacle_light": 0,
     "Obstacle_LowerLimit_LH": 0,
     "Obstacle_LowerLimit_LS": 0,
     "Obstacle_LowerLimit_LV": 0,
@@ -43,15 +46,21 @@
     "Obstacle_LowerLimit_US": 164,
     "Obstacle_LowerLimit_UV": 44,
 
+    "Obstacle_filter": 8,
     "Obstacle_kernel": 40,
     "Obstacle_SIZE": 40,
+    "Cross_SIZE": 20,
+    "Barrier_SIZE": 50,
 
-    "Obstacle_max_ratio": 2.5,
-    "Obstacle_min_ratio": 0.6,
+    "Obstacle_max_ratio": 1.0,
+    "Obstacle_min_ratio": 0.5,
+    "Barrier_max_ratio": 3.0,
+    "Barrier_min_ratio": 0.5,
+    "Cross_max_ratio": 0.4,
+    "Cross_min_ratio": 0.05,
 
-    "Obstacle_w_judge":0.5,
-
-    "Cross_times": 12,
+    "Barrier_w_judge":0.6,
+    "Cross_w_judge":0.6,
 
     "roi_size": 28
 }

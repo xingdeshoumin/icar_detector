@@ -16,8 +16,8 @@ class SignClassifier
 {
 public:
   SignClassifier(
-    const std::string & model_path, const std::string & label_path, const double threshold,
-    const std::vector<std::string> & ignore_classes, const bool log_out);
+    const std::string & model_path, const std::string & label_path, const double thre,
+    const std::vector<std::string> & ignore_classes, const bool out);
 
   void sign_classify(std::vector<Sign>& signs);
   void obstacles_classify(std::vector<Obstacle>& signs);

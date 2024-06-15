@@ -23,11 +23,15 @@ int main()
     auto config = Config("./icar_detector/config/detecor_config.json");
 
     // 加载图像
-    // cv::Mat scr = cv::imread("/mnt/d/Chromedownload/smart-car/edgeboard/res/samples/train/254.jpg");
-    // cv::Mat scr = cv::imread("/mnt/d/Chromedownload/mee/mee/1.jpg");
-    // /mnt/d/Chromedownload/smart-car/smart-car/edgeboard/res/samples/train
+    // /mnt/d/Chromedownload/smart-car/edgeboard/res/samples/train/
+    // /mnt/d/Chromedownload/mee/mee/
+    // /mnt/d/Chromedownload/smart-car/smart-car/edgeboard/res/samples/train/
+    // /mnt/d/Miniconda3/envs/ML_01/Data/output1/
+    // /mnt/d/Miniconda3/envs/ML_01/Data/output4/
+    // /mnt/d/Miniconda3/envs/ML_01/Data/output3/
+    // /mnt/d/Chromedownload/annotations/images/
     // 指定文件夹路径
-    std::string folderPath = "/mnt/d/Chromedownload/smart-car/smart-car/edgeboard/res/samples/train/*.jpg"; 
+    std::string folderPath = "/mnt/d/Miniconda3/envs/ML_01/Data/output4/*.jpg"; 
 
     // 获取文件夹中所有图片的路径
     std::vector<std::string> imagePaths;
@@ -40,67 +44,60 @@ int main()
     cv::namedWindow("Image Viewer", cv::WINDOW_NORMAL);
 
     // 初始化Detector
-    auto pkg_path = ament_index_cpp::get_package_share_directory("icar_detector");
+    auto pkg_path = ament_index_cpp::get_package_share_directory("icar_detector");  
     pkg_path = pkg_path.substr(0, pkg_path.find("icar_detector")) + "icar_detector" + "/icar_detector";
     if (config.params.SHOW_LOGS) std::cout << "pkg_path: " << pkg_path << std::endl;
     auto sign_model_path = pkg_path + "/model/sign_mlp.onnx";
     auto sign_label_path = pkg_path + "/model/sign_label.txt";
     auto obstacle_model_path = pkg_path + "/model/obstacle_mlp.onnx";
     auto obstacle_label_path = pkg_path + "/model/obstacle_label.txt";
-    float threshold = 0.4f;
+    float threshold = 0.7f;
     std::vector<std::string> ignore_classes = {"negative"};
     
     Detector detector(config.params);
     detector.sign_classifier =
     std::make_unique<SignClassifier>(sign_model_path, sign_label_path, threshold, ignore_classes, config.params.SHOW_LOGS);
     detector.obstacle_classifier =
-    std::make_unique<SignClassifier>(obstacle_model_path, obstacle_label_path, threshold, ignore_classes, config.params.SHOW_LOGS);
-
+    std::make_unique<SignClassifier>(obstacle_model_path, obstacle_label_path, (threshold), ignore_classes, config.params.SHOW_LOGS);
+    if (config.params.THREADS) detector.initDetect_thread();
+    
     // 读取第一张图片
     int currentImageIndex = 0;
     double fps = 0;
-    bool out = false;
 
     //********************************************** Loop *****************************************************
     while(true){
 
+    
     auto startTime = std::chrono::high_resolution_clock::now();
-
     cv::Mat currentImage = cv::imread(imagePaths[currentImageIndex]);
     std::cout << "img_path: " << imagePaths[currentImageIndex] << std::endl;
     
-    detector.detect(currentImage);
-    cv::Mat hsv = detector.hsv_img;
-
+    if (!config.params.THREADS) detector.detect(currentImage);
+    if (config.params.THREADS) detector.inputImage(currentImage);
     //********************************************** 锥桶识别 *****************************************************
-
-    cv::Mat Conical_mask = detector.Conical_mask;
-
     //********************************************** 路牌识别 *****************************************************
-
-    cv::Mat Sign_mask = detector.Sign_mask;
-
     //********************************************** 结果输出 *****************************************************
     auto endTime = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = endTime - startTime;
     double seconds = diff.count();
     // Time elapsed
-    fps = 1.0 / seconds;
+    fps = (1.0 / seconds)*0.1 + fps*0.9;
 
     // std::cout << "fps: " << fps << std::endl;
-    detector.drawResults(detector.resized_img);
-
+    cv::Mat show_img = detector.drawResults(detector.resized_img);
+    cv::resize(show_img, show_img, cv::Size(1280, 960));
     // 在图片左上角绘制帧率
-    cv::putText(detector.resized_img, std::to_string(fps), cv::Point(10, 30),
+    cv::putText(show_img, std::to_string(fps), cv::Point(10, 30),
                 cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 2);
 
-    cv::imshow("Image Viewer", detector.resized_img);
-    // cv::imshow("Conical_result", Conical_result);
-    // cv::imshow("Boom_result", Boom_result);
-    // cv::imshow("Sign_result", Sign_result);
+    cv::imshow("Image Viewer", show_img);
+    // if (!detector.Conical_mask.empty()) cv::imshow("Conical_mask", detector.Conical_mask.clone());
+    // if (!detector.Sign_mask.empty()) cv::imshow("Sign_mask", detector.Sign_mask.clone());
+    if (!detector.Obstacle_mask.empty()) cv::imshow("Obstacle_mask", detector.Obstacle_mask.clone());
 
     // 等待用户按键
-    char key = cv::waitKey(10);
+    char key = cv::waitKey(1);
     // std::cout << currentImageIndex << std::endl;
     detector.params.OUPUT_DATASET_Signs = false;
     detector.params.OUPUT_DATASET_Obstacles = false;
